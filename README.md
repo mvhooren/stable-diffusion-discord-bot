@@ -1,3 +1,18 @@
+# MODS:
+This version achieves much better quality at the cost of speed and hardware requirements using these tweaks:
+
+Stable diffusion XL support (Requires sd_xl_base_1.0_0.9vae.safetensors to be active and sd_xl_refiner_1.0_0.9vae.safetensors to be available for the refiner)
+1024x1024 by default.
+Optional negative prompting through discord command.
+No default negative prompting. (Original bot contains a large default negative prompt)
+Use DPM++ 2M SDE Karras sampler
+23 steps instead of 20
+Set CfgScale to 7 instead of 9
+Use sd_xl_refiner_1.0_0.9vae.safetensors as the Refiner.
+DenoiseStrength set to 0.8 instead of 0.7.
+
+Needless to say, some of these settings are highly subjective.
+
 # Stable Diffusion Discord Bot
 
 This is a Discord bot that interfaces with the Automatic1111 API, from this project: https://github.com/AUTOMATIC1111/stable-diffusion-webui 
