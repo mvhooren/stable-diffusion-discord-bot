@@ -275,6 +275,12 @@ func (b *botImpl) addImagineCommand() error {
 				Description: "The text prompt to imagine",
 				Required:    true,
 			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "negative-prompt",
+				Description: "The text prompt to NOT imagine",
+				Required:    false,
+			},			
 		},
 	})
 	if err != nil {
@@ -379,12 +385,21 @@ func (b *botImpl) processImagineCommand(s *discordgo.Session, i *discordgo.Inter
 	var position int
 	var queueError error
 	var prompt string
+	var negPrompt string
+
+
+	if option, ok := optionMap["negative-prompt"]; ok {
+		negPrompt = option.StringValue()
+	} else {
+		negPrompt = ""
+	}
 
 	if option, ok := optionMap["prompt"]; ok {
 		prompt = option.StringValue()
 
 		position, queueError = b.imagineQueue.AddImagine(&imagine_queue.QueueItem{
 			Prompt:             prompt,
+			NegPrompt:          negPrompt,
 			Type:               imagine_queue.ItemTypeImagine,
 			DiscordInteraction: i.Interaction,
 		})
@@ -393,14 +408,15 @@ func (b *botImpl) processImagineCommand(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 
+
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf(
-				"I'm dreaming something up for you. You are currently #%d in line.\n<@%s> asked me to imagine \"%s\".",
+				"I'm dreaming something up for you. You are currently #%d in line.\n<@%s> asked me to imagine \"%s\" and NOT \"%s\".",
 				position,
 				i.Member.User.ID,
-				prompt),
+				prompt, negPrompt),
 		},
 	})
 	if err != nil {
@@ -429,6 +445,11 @@ func settingsMessageComponents(settings *entities.DefaultSettings) []discordgo.M
 							Value:   "768_768",
 							Default: settings.Width == 768 && settings.Height == 768,
 						},
+						{
+							Label:   "Size: 1024x1024",
+							Value:   "1024_1024",
+							Default: settings.Width == 1024 && settings.Height == 1024,
+						},						
 					},
 				},
 			},

@@ -53,6 +53,8 @@ type TextToImageRequest struct {
 	EnableHR          bool    `json:"enable_hr"`
 	HRResizeX         int     `json:"hr_resize_x"`
 	HRResizeY         int     `json:"hr_resize_y"`
+	HRScale           float64 `json:"hr_scale"`
+	HRUpscaler		  string  `json:"hr_upscaler"`
 	DenoisingStrength float64 `json:"denoising_strength"`
 	BatchSize         int     `json:"batch_size"`
 	Seed              int     `json:"seed"`
@@ -62,6 +64,8 @@ type TextToImageRequest struct {
 	CfgScale          float64 `json:"cfg_scale"`
 	Steps             int     `json:"steps"`
 	NIter             int     `json:"n_iter"`
+	Refiner           string  `json:"refiner_checkpoint"`
+	RefinerSwitch	  float64 `json:"refiner_switch_at"`
 }
 
 func (api *apiImpl) TextToImage(req *TextToImageRequest) (*TextToImageResponse, error) {

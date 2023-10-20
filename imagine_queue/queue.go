@@ -27,10 +27,10 @@ import (
 const (
 	botID = "bot"
 
-	initializedWidth      = 512
-	initializedHeight     = 512
-	initializedBatchCount = 4
-	initializedBatchSize  = 1
+	initializedWidth      = 1024
+	initializedHeight     = 1024
+	initializedBatchCount = 1
+	initializedBatchSize  = 4
 )
 
 type queueImpl struct {
@@ -89,6 +89,7 @@ const (
 
 type QueueItem struct {
 	Prompt             string
+	NegPrompt          string
 	Type               ItemType
 	InteractionIndex   int
 	DiscordInteraction *discordgo.Interaction
@@ -407,22 +408,20 @@ func (q *queueImpl) processCurrentImagine() {
 		// new generation with defaults
 		newGeneration := &entities.ImageGeneration{
 			Prompt: promptRes.SanitizedPrompt,
-			NegativePrompt: "ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, " +
-				"mutation, mutated, extra limbs, extra legs, extra arms, disfigured, deformed, cross-eye, " +
-				"body out of frame, blurry, bad art, bad anatomy, blurred, text, watermark, grainy",
+			NegativePrompt:    q.currentImagine.NegPrompt,
 			Width:             defaultWidth,
 			Height:            defaultHeight,
 			RestoreFaces:      true,
 			EnableHR:          enableHR,
 			HiresWidth:        hiresWidth,
 			HiresHeight:       hiresHeight,
-			DenoisingStrength: 0.7,
+			DenoisingStrength: 0.8,
 			Seed:              -1,
 			Subseed:           -1,
 			SubseedStrength:   0,
-			SamplerName:       "Euler a",
-			CfgScale:          9,
-			Steps:             20,
+			SamplerName:       "DPM++ 2M SDE Karras",
+			CfgScale:          7,
+			Steps:             23,
 			Processed:         false,
 		}
 
@@ -479,12 +478,13 @@ func (q *queueImpl) getPreviousGeneration(imagine *QueueItem, sortOrder int) (*e
 
 func imagineMessageContent(generation *entities.ImageGeneration, user *discordgo.User, progress float64) string {
 	if progress >= 0 && progress < 1 {
-		return fmt.Sprintf("<@%s> asked me to imagine \"%s\". Currently dreaming it up for them. Progress: %.0f%%",
-			user.ID, generation.Prompt, progress*100)
+		return fmt.Sprintf("<@%s> asked me to imagine \"%s\" and NOT \"%s\". Currently dreaming it up for them. Progress: %.0f%%",
+			user.ID, generation.Prompt, generation.NegativePrompt, progress*100)
 	} else {
-		return fmt.Sprintf("<@%s> asked me to imagine \"%s\", here is what I imagined for them.",
+		return fmt.Sprintf("<@%s> asked me to imagine \"%s\", and NOT \"%s\", here is what I imagined for them.",
 			user.ID,
 			generation.Prompt,
+			generation.NegativePrompt,
 		)
 	}
 }
@@ -577,6 +577,10 @@ func (q *queueImpl) processImagineGrid(newGeneration *entities.ImageGeneration, 
 		CfgScale:          newGeneration.CfgScale,
 		Steps:             newGeneration.Steps,
 		NIter:             newGeneration.BatchCount,
+		Refiner:		   "sd_xl_refiner_1.0_0.9vae.safetensors",
+		RefinerSwitch:	   0.8,
+		HRScale:		   1,			
+		HRUpscaler:        "ESRGAN_4x",		
 	})
 	if err != nil {
 		log.Printf("Error processing image: %v\n", err)
